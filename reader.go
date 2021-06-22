@@ -4,14 +4,16 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
+	"encoding/ascii85"
 	"encoding/binary"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"math"
 	"os"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 type PdfReader struct {
@@ -1423,11 +1425,18 @@ func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 			// Uncompress zlib compressed data
 			var out bytes.Buffer
 			zlibReader, _ := zlib.NewReader(bytes.NewBuffer(stream))
+
 			defer zlibReader.Close()
 			io.Copy(&out, zlibReader)
 
 			// Set stream to uncompressed data
 			stream = out.Bytes()
+		case "/ASCII85Decode":
+			encoded := stream
+			// the -3 strips the end of data marker
+			decodedBytes, _ := ioutil.ReadAll(ascii85.NewDecoder(bytes.NewBuffer(encoded[:len(encoded)-3])))
+			stream = decodedBytes
+
 		default:
 			return nil, errors.New("Unspported filter: " + filters[i].Token)
 		}
