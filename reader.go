@@ -1422,6 +1422,7 @@ func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 
 	// Loop through filters and apply each filter to stream
 	for i := 0; i < len(filters); i++ {
+		fmt.Println("filters[i].Token=", filters[i].Token)
 		switch filters[i].Token {
 		case "/FlateDecode":
 			// Uncompress zlib compressed data
@@ -1436,8 +1437,6 @@ func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 		case "/ASCII85Decode":
 			encoded := stream
 			// the -3 strips the end of data marker
-			// Previously, this was returning an error but was decoding the PDF fine when working with packing slip,
-			// should be a false alarm
 			decodedBytes, err := ioutil.ReadAll(ascii85.NewDecoder(bytes.NewBuffer(encoded[:len(encoded)-3])))
 			if err != nil {
 				return nil, err
