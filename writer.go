@@ -114,6 +114,7 @@ func (this *PdfWriter) ClearImportedObjects() {
 
 // Create a PdfTemplate object from a page number (e.g. 1) and a boxName (e.g. MediaBox)
 func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string) (int, error) {
+	fmt.Println("gofpdi writer ImportPage")
 	var err error
 
 	// Set default scale to 1
