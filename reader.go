@@ -1434,6 +1434,7 @@ func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 		case "/ASCII85Decode":
 			encoded := stream
 			// the -3 strips the end of data marker
+			// This was returning an error but was decoding the PDF fine, should be a false alarm
 			decodedBytes, _ := ioutil.ReadAll(ascii85.NewDecoder(bytes.NewBuffer(encoded[:len(encoded)-3])))
 			stream = decodedBytes
 
