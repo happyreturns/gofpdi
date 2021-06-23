@@ -131,14 +131,11 @@ func (this *Importer) GetPageSizes() map[int]map[string]map[string]float64 {
 }
 
 func (this *Importer) ImportPage(pageno int, box string) (int, error) {
-	fmt.Println("gofpdi importer.go ImportPage")
 	// If page has already been imported, return existing tplN
 	pageNameNumber := fmt.Sprintf("%s-%04d", this.sourceFile, pageno)
 	if _, ok := this.importedPages[pageNameNumber]; ok {
 		return this.importedPages[pageNameNumber], nil
 	}
-
-	fmt.Println("gofpdi importer.go ImportPage - this.GetWriter().ImportPage")
 
 	res, err := this.GetWriter().ImportPage(this.GetReader(), pageno, box)
 	if err != nil {
