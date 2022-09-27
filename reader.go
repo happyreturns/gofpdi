@@ -1468,7 +1468,7 @@ func (this *PdfReader) rebuildContentStream(ctx context.Context, content *PdfVal
 			decodedBytes, err := ioutil.ReadAll(ascii85.NewDecoder(bytes.NewBuffer(encoded[:len(encoded)-3])))
 			// Sometimes there's an error decoding ascii85 but appending the packing slip will still work so we log it and move on
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Info("error rebuilding content from stream")
+				log.FromContext(ctx).WithError(err).Warn("error rebuilding content from stream")
 			}
 			stream = decodedBytes
 
