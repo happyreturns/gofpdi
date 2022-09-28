@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	"context"
 	"encoding/ascii85"
 	"encoding/binary"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/happyreturns/gohelpers/log"
 	"github.com/pkg/errors"
 )
 
@@ -1357,7 +1355,7 @@ func (this *PdfReader) getPageContent(objSpec *PdfValue) ([]*PdfValue, error) {
 }
 
 // Get content (i.e. PDF drawing instructions)
-func (this *PdfReader) getContent(ctx context.Context, pageno int) (string, error) {
+func (this *PdfReader) getContent(pageno int) (string, error) {
 	var err error
 	var contents []*PdfValue
 
@@ -1400,7 +1398,7 @@ func (this *PdfReader) getContent(ctx context.Context, pageno int) (string, erro
 			}
 			// Decode content if one or more /Filter is specified.
 			// Most common filter is FlateDecode which can be uncompressed with zlib
-			tmpBuffer, err := this.rebuildContentStream(ctx, contents[i])
+			tmpBuffer, err := this.rebuildContentStream(contents[i])
 			if err != nil {
 				return "", errors.Wrap(err, "Failed to rebuild content stream")
 			}
@@ -1416,7 +1414,7 @@ func (this *PdfReader) getContent(ctx context.Context, pageno int) (string, erro
 // Rebuild content stream
 // This will decode content if one or more /Filter (such as FlateDecode) is specified.
 // If there are multiple filters, they will be decoded in the order in which they were specified.
-func (this *PdfReader) rebuildContentStream(ctx context.Context, content *PdfValue) ([]byte, error) {
+func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 	var err error
 	var tmpFilter *PdfValue
 
@@ -1466,9 +1464,8 @@ func (this *PdfReader) rebuildContentStream(ctx context.Context, content *PdfVal
 			encoded := stream
 			// the -3 strips the end of data marker
 			decodedBytes, err := ioutil.ReadAll(ascii85.NewDecoder(bytes.NewBuffer(encoded[:len(encoded)-3])))
-			// Sometimes there's an error decoding ascii85 but appending the packing slip will still work so we log it and move on
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Warn("error rebuilding content from stream")
+				return nil, err
 			}
 			stream = decodedBytes
 
