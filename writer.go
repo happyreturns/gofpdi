@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
@@ -115,7 +114,7 @@ func (this *PdfWriter) ClearImportedObjects() {
 }
 
 // Create a PdfTemplate object from a page number (e.g. 1) and a boxName (e.g. MediaBox)
-func (this *PdfWriter) ImportPage(ctx context.Context, reader *PdfReader, pageno int, boxName string) (int, error) {
+func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string) (int, error) {
 	var err error
 
 	// Set default scale to 1
@@ -147,7 +146,7 @@ func (this *PdfWriter) ImportPage(ctx context.Context, reader *PdfReader, pageno
 		return -1, errors.Wrap(err, "Failed to get page resources")
 	}
 
-	content, err := reader.getContent(ctx, pageno)
+	content, err := reader.getContent(pageno)
 	if err != nil {
 		return -1, errors.Wrap(err, "Failed to get content")
 	}

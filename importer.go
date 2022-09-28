@@ -1,7 +1,6 @@
 package gofpdi
 
 import (
-	"context"
 	"fmt"
 	"io"
 )
@@ -131,14 +130,14 @@ func (this *Importer) GetPageSizes() map[int]map[string]map[string]float64 {
 	return result
 }
 
-func (this *Importer) ImportPage(ctx context.Context, pageno int, box string) (int, error) {
+func (this *Importer) ImportPage(pageno int, box string) (int, error) {
 	// If page has already been imported, return existing tplN
 	pageNameNumber := fmt.Sprintf("%s-%04d", this.sourceFile, pageno)
 	if _, ok := this.importedPages[pageNameNumber]; ok {
 		return this.importedPages[pageNameNumber], nil
 	}
 
-	res, err := this.GetWriter().ImportPage(ctx, this.GetReader(), pageno, box)
+	res, err := this.GetWriter().ImportPage(this.GetReader(), pageno, box)
 	if err != nil {
 		return 0, fmt.Errorf("importer import page: %s", err)
 	}
