@@ -116,6 +116,7 @@ func (this *PdfWriter) ClearImportedObjects() {
 // Create a PdfTemplate object from a page number (e.g. 1) and a boxName (e.g. MediaBox)
 func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string) (int, error) {
 	var err error
+	var ascii85Err error
 
 	// Set default scale to 1
 	this.k = 1
@@ -148,7 +149,12 @@ func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string)
 
 	content, err := reader.getContent(pageno)
 	if err != nil {
-		return -1, errors.Wrap(err, "Failed to get content")
+		switch err.(type) {
+		case *Ascii85DecodeError:
+			ascii85Err = err
+		default:
+			return -1, errors.Wrap(err, "Failed to get content")
+		}
 	}
 
 	// Set template values
@@ -194,6 +200,9 @@ func (this *PdfWriter) ImportPage(reader *PdfReader, pageno int, boxName string)
 	this.tpls = append(this.tpls, tpl)
 
 	// Return last template id
+	if ascii85Err != nil {
+		return len(this.tpls) - 1, ascii85Err
+	}
 	return len(this.tpls) - 1, nil
 }
 
