@@ -12,6 +12,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -31,6 +32,14 @@ type PdfReader struct {
 	curPage        int
 	alreadyRead    bool
 	pageCount      int
+}
+
+type Ascii85DecodeError struct {
+	Message string
+}
+
+func (e *Ascii85DecodeError) Error() string {
+	return fmt.Sprintf("error decoding ascii85: %s", e.Message)
 }
 
 func NewPdfReaderFromStream(rs io.ReadSeeker) (*PdfReader, error) {
@@ -1358,6 +1367,7 @@ func (this *PdfReader) getPageContent(objSpec *PdfValue) ([]*PdfValue, error) {
 func (this *PdfReader) getContent(pageno int) (string, error) {
 	var err error
 	var contents []*PdfValue
+	var ascii85Err error
 
 	// Check to make sure page exists in pages slice
 	if len(this.pages) < pageno {
@@ -1400,7 +1410,12 @@ func (this *PdfReader) getContent(pageno int) (string, error) {
 			// Most common filter is FlateDecode which can be uncompressed with zlib
 			tmpBuffer, err := this.rebuildContentStream(contents[i])
 			if err != nil {
-				return "", errors.Wrap(err, "Failed to rebuild content stream")
+				switch err.(type) {
+				case *Ascii85DecodeError:
+					ascii85Err = err
+				default:
+					return "", errors.Wrap(err, "Failed to rebuild content stream")
+				}
 			}
 
 			// FIXME:  This is probably slow
@@ -1408,6 +1423,9 @@ func (this *PdfReader) getContent(pageno int) (string, error) {
 		}
 	}
 
+	if ascii85Err != nil {
+		return buffer, ascii85Err
+	}
 	return buffer, nil
 }
 
@@ -1417,6 +1435,7 @@ func (this *PdfReader) getContent(pageno int) (string, error) {
 func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 	var err error
 	var tmpFilter *PdfValue
+	var asciiDecodeErr *Ascii85DecodeError
 
 	// Allocate slice of PdfValue
 	filters := make([]*PdfValue, 0)
@@ -1465,7 +1484,11 @@ func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 			// the -3 strips the end of data marker
 			decodedBytes, err := ioutil.ReadAll(ascii85.NewDecoder(bytes.NewBuffer(encoded[:len(encoded)-3])))
 			if err != nil {
-				return nil, err
+				if strings.Contains(err.Error(), "illegal ascii85 data") {
+					asciiDecodeErr = &Ascii85DecodeError{Message: err.Error()}
+				} else {
+					return nil, err
+				}
 			}
 			stream = decodedBytes
 
@@ -1474,6 +1497,9 @@ func (this *PdfReader) rebuildContentStream(content *PdfValue) ([]byte, error) {
 		}
 	}
 
+	if asciiDecodeErr != nil {
+		return stream, asciiDecodeErr
+	}
 	return stream, nil
 }
 

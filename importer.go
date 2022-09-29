@@ -131,6 +131,8 @@ func (this *Importer) GetPageSizes() map[int]map[string]map[string]float64 {
 }
 
 func (this *Importer) ImportPage(pageno int, box string) (int, error) {
+	var ascii85Err error
+
 	// If page has already been imported, return existing tplN
 	pageNameNumber := fmt.Sprintf("%s-%04d", this.sourceFile, pageno)
 	if _, ok := this.importedPages[pageNameNumber]; ok {
@@ -139,7 +141,12 @@ func (this *Importer) ImportPage(pageno int, box string) (int, error) {
 
 	res, err := this.GetWriter().ImportPage(this.GetReader(), pageno, box)
 	if err != nil {
-		return 0, fmt.Errorf("importer import page: %s", err)
+		switch err.(type) {
+		case *Ascii85DecodeError:
+			ascii85Err = err
+		default:
+			return 0, fmt.Errorf("importer import page: %s", err)
+		}
 	}
 
 	// Get current template id
@@ -154,6 +161,9 @@ func (this *Importer) ImportPage(pageno int, box string) (int, error) {
 	// Cache imported page tplN
 	this.importedPages[pageNameNumber] = tplN
 
+	if ascii85Err != nil {
+		return tplN, ascii85Err
+	}
 	return tplN, nil
 }
 
