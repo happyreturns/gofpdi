@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	"crypto/sha256"
+	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -236,8 +236,8 @@ func (this *PdfWriter) endObj() {
 }
 
 func (this *PdfWriter) shaOfInt(i int) string {
-	hasher := sha256.New()
-	hasher.Write([]byte(fmt.Sprintf("%d-%s", i, this.r.sourceFile)))
+	hasher := sha1.New()
+	hasher.Write([]byte(fmt.Sprintf("%s-%s-%s", this.tpl_id_offset, i, this.r.sourceFile)))
 	sha := hex.EncodeToString(hasher.Sum(nil))
 	return sha
 }

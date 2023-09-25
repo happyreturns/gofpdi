@@ -42,12 +42,12 @@ func (e *Ascii85DecodeError) Error() string {
 	return fmt.Sprintf("error decoding ascii85: %s", e.Message)
 }
 
-func NewPdfReaderFromStream(rs io.ReadSeeker) (*PdfReader, error) {
+func NewPdfReaderFromStream(sourceFile string, rs io.ReadSeeker) (*PdfReader, error) {
 	length, err := rs.Seek(0, 2)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to determine stream length")
 	}
-	parser := &PdfReader{f: rs, nBytes: length}
+	parser := &PdfReader{f: rs, sourceFile: sourceFile, nBytes: length}
 	if err := parser.init(); err != nil {
 		return nil, errors.Wrap(err, "Failed to initialize parser")
 	}
