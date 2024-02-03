@@ -1309,21 +1309,56 @@ func (this *PdfReader) getPageResources(pageno int) (*PdfValue, error) {
 		// Otherwise, returned the resolved object
 		return res, nil
 	} else {
-		// If /Resources does not exist, check to see if /Parent exists and return that
+		// If /Resources does not exist, check to see if /Parent exists and return the /Resources
+		// from parent.
 		if _, ok := page.Value.Dictionary["/Parent"]; ok {
 			// Resolve parent object
-			res, err := this.resolveObject(page.Value.Dictionary["/Parent"])
+			parentPage, err := this.resolveObject(page.Value.Dictionary["/Parent"])
 			if err != nil {
 				return nil, errors.Wrap(err, "Failed to resolve parent object")
 			}
 
-			// If /Parent object type is PDF_TYPE_OBJECT, return its Value
-			if res.Type == PDF_TYPE_OBJECT {
-				return res.Value, nil
+			// If /Parent object type is PDF_TYPE_OBJECT, look for /Resources in its Value
+			if parentPage.Type == PDF_TYPE_OBJECT {
+				if _, ok := parentPage.Value.Dictionary["/Resources"]; ok {
+					// Resolve /Resources object
+					res, err := this.resolveObject(parentPage.Value.Dictionary["/Resources"])
+					if err != nil {
+						return nil, errors.Wrap(err, "Failed to resolve resources object from parent (object)")
+					}
+					// If type is PDF_TYPE_OBJECT, return its Value
+					if res.Type == PDF_TYPE_OBJECT {
+						return res.Value, nil
+					}
+
+					// Otherwise, returned the resolved object
+					return res, nil
+				}
+
+				// Return an empty PdfValue if /Resources is not found
+				return &PdfValue{}, nil
 			}
 
-			// Otherwise, return the resolved parent object
-			return res, nil
+			// If /Parent object type is PDF_TYPE_DICTIONARY, look for /Resources in its Dictionary
+			if parentPage.Type == PDF_TYPE_DICTIONARY {
+				if _, ok := parentPage.Dictionary["/Resources"]; ok {
+					// Resolve /Resources object
+					res, err := this.resolveObject(parentPage.Dictionary["/Resources"])
+					if err != nil {
+						return nil, errors.Wrap(err, "Failed to resolve resources object from parent (dictionary)")
+					}
+					// If type is PDF_TYPE_OBJECT, return its Value
+					if res.Type == PDF_TYPE_OBJECT {
+						return res.Value, nil
+					}
+
+					// Otherwise, returned the resolved object
+					return res, nil
+				}
+
+				// Return an empty PdfValue if /Resources is not found
+				return &PdfValue{}, nil
+			}
 		}
 	}
 

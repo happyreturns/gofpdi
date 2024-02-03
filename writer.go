@@ -237,7 +237,7 @@ func (this *PdfWriter) endObj() {
 
 func (this *PdfWriter) shaOfInt(i int) string {
 	hasher := sha1.New()
-	hasher.Write([]byte(fmt.Sprintf("%s-%s-%s", this.tpl_id_offset, i, this.r.sourceFile)))
+	hasher.Write([]byte(fmt.Sprintf("%d-%d-%s", this.tpl_id_offset, i, this.r.sourceFile)))
 	sha := hex.EncodeToString(hasher.Sum(nil))
 	return sha
 }

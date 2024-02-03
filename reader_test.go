@@ -16,7 +16,7 @@ func TestNewPdfReaderFromStream(t *testing.T) {
 			t.Fatalf("failed to read test file %s: %v", "bad_pdf.pdf", err)
 		}
 		rs := io.ReadSeeker(bytes.NewReader(input))
-		reader, err := NewPdfReaderFromStream(rs)
+		reader, err := NewPdfReaderFromStream("bad_pdf.pdf", rs)
 		assert.Nil(t, reader)
 		assert.NotNil(t, err)
 		assert.Contains(t, err.Error(), "Failed to find startxref token")
