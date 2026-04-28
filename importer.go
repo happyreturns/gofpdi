@@ -184,7 +184,7 @@ func (this *Importer) PutFormXobjects() map[string]int {
 	return res
 }
 
-// Put form xobjects and get back a map of template names (e.g. /GOFPDITPL1) and their object ids (sha1 hash)
+// Put form xobjects and get back a map of template names (e.g. /GOFPDITPL1) and their object ids (sha256 hash)
 func (this *Importer) PutFormXobjectsUnordered() map[string]string {
 	this.GetWriter().SetUseHash(true)
 	res := make(map[string]string, 0)
@@ -208,9 +208,9 @@ func (this *Importer) GetImportedObjects() map[int]string {
 	return res
 }
 
-// Get object ids (sha1 hash) and their contents ([]byte)
+// Get object ids (sha256 hash) and their contents ([]byte)
 // The contents may have references to other object hashes which will need to be replaced by the pdf generator library
-// The positions of the hashes (sha1 - 40 characters) can be obtained by calling GetImportedObjHashPos()
+// The positions of the hashes (sha256 - 64 characters) can be obtained by calling GetImportedObjHashPos()
 func (this *Importer) GetImportedObjectsUnordered() map[string][]byte {
 	res := make(map[string][]byte, 0)
 	pdfObjIdBytes := this.GetWriter().GetImportedObjects()
@@ -220,7 +220,7 @@ func (this *Importer) GetImportedObjectsUnordered() map[string][]byte {
 	return res
 }
 
-// Get the positions of the hashes (sha1 - 40 characters) within each object, to be replaced with
+// Get the positions of the hashes (sha256 - 64 characters) within each object, to be replaced with
 // actual objects ids by the pdf generator library
 func (this *Importer) GetImportedObjHashPos() map[string]map[int]string {
 	res := make(map[string]map[int]string, 0)

@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -103,7 +103,7 @@ func (this *PdfWriter) GetImportedObjects() map[*PdfObjectId][]byte {
 	return this.written_objs
 }
 
-// For each object (uniquely identified by a sha1 hash), return the positions
+// For each object (uniquely identified by a sha256 hash), return the positions
 // of each hash within the object, to be replaced with pdf object ids (integers)
 func (this *PdfWriter) GetImportedObjHashPos() map[*PdfObjectId]map[int]string {
 	return this.written_obj_pos
@@ -236,7 +236,7 @@ func (this *PdfWriter) endObj() {
 }
 
 func (this *PdfWriter) shaOfInt(i int) string {
-	hasher := sha1.New()
+	hasher := sha256.New()
 	hasher.Write([]byte(fmt.Sprintf("%d-%d-%s", this.tpl_id_offset, i, this.r.sourceFile)))
 	sha := hex.EncodeToString(hasher.Sum(nil))
 	return sha
