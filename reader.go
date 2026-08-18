@@ -1059,7 +1059,9 @@ func (this *PdfReader) readXref() error {
 							copy(b[4-middleFieldSize:], objectData[1:1+middleFieldSize])
 
 							objPos = int(binary.BigEndian.Uint32(b))
-							objGen = int(objectData[firstFieldSize+middleFieldSize])
+							bGen := make([]byte, 4)
+							copy(bGen[4-lastFieldSize:], objectData[firstFieldSize+middleFieldSize:firstFieldSize+middleFieldSize+lastFieldSize])
+							objGen = int(binary.BigEndian.Uint32(bGen))
 
 							// Append map[int]int
 							this.xref[i] = make(map[int]int, 1)
@@ -1072,7 +1074,9 @@ func (this *PdfReader) readXref() error {
 							copy(b[4-middleFieldSize:], objectData[1:1+middleFieldSize])
 
 							objId := int(binary.BigEndian.Uint32(b))
-							objIdx := int(objectData[firstFieldSize+middleFieldSize])
+							bIdx := make([]byte, 4)
+							copy(bIdx[4-lastFieldSize:], objectData[firstFieldSize+middleFieldSize:firstFieldSize+middleFieldSize+lastFieldSize])
+							objIdx := int(binary.BigEndian.Uint32(bIdx))
 
 							// object id (i) is located in StmObj (objId) at index (objIdx)
 							this.xrefStream[i] = [2]int{objId, objIdx}
