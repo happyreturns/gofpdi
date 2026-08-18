@@ -611,6 +611,10 @@ func (this *PdfReader) resolveObject(objSpec *PdfValue) (*PdfValue, error) {
 	var err error
 	var old_pos int64
 
+	if objSpec == nil {
+		return nil, errors.New("cannot resolve nil object")
+	}
+
 	// Create new bufio.Reader
 	r := bufio.NewReader(this.f)
 
@@ -1247,8 +1251,17 @@ func (this *PdfReader) readKids(kids *PdfValue, r int) error {
 func (this *PdfReader) readPages() error {
 	var err error
 
+	if this.catalog == nil || this.catalog.Value == nil {
+		return errors.New("catalog is not set")
+	}
+
+	pagesSpec := this.catalog.Value.Dictionary["/Pages"]
+	if pagesSpec == nil {
+		return errors.New("catalog missing /Pages entry")
+	}
+
 	// resolve_pages_dict
-	pagesDict, err := this.resolveObject(this.catalog.Value.Dictionary["/Pages"])
+	pagesDict, err := this.resolveObject(pagesSpec)
 	if err != nil {
 		return errors.Wrap(err, "Failed to resolve pages object")
 	}

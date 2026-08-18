@@ -22,3 +22,23 @@ func TestNewPdfReaderFromStream(t *testing.T) {
 		assert.Contains(t, err.Error(), "Failed to find startxref token")
 	})
 }
+
+func TestResolveObjectNilSpec(t *testing.T) {
+	reader := &PdfReader{}
+	result, err := reader.resolveObject(nil)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "cannot resolve nil object")
+}
+
+func TestReadPagesMissingPagesEntry(t *testing.T) {
+	reader := &PdfReader{
+		catalog: &PdfValue{
+			Value: &PdfValue{
+				Dictionary: map[string]*PdfValue{},
+			},
+		},
+	}
+
+	err := reader.readPages()
+	assert.EqualError(t, err, "catalog missing /Pages entry")
+}
