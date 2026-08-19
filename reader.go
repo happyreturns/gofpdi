@@ -611,6 +611,10 @@ func (this *PdfReader) resolveObject(objSpec *PdfValue) (*PdfValue, error) {
 	var err error
 	var old_pos int64
 
+	if objSpec == nil {
+		return nil, errors.New("cannot resolve nil object")
+	}
+
 	// Create new bufio.Reader
 	r := bufio.NewReader(this.f)
 
@@ -1055,7 +1059,9 @@ func (this *PdfReader) readXref() error {
 							copy(b[4-middleFieldSize:], objectData[1:1+middleFieldSize])
 
 							objPos = int(binary.BigEndian.Uint32(b))
-							objGen = int(objectData[firstFieldSize+middleFieldSize])
+							bGen := make([]byte, 4)
+							copy(bGen[4-lastFieldSize:], objectData[firstFieldSize+middleFieldSize:firstFieldSize+middleFieldSize+lastFieldSize])
+							objGen = int(binary.BigEndian.Uint32(bGen))
 
 							// Append map[int]int
 							this.xref[i] = make(map[int]int, 1)
@@ -1068,7 +1074,9 @@ func (this *PdfReader) readXref() error {
 							copy(b[4-middleFieldSize:], objectData[1:1+middleFieldSize])
 
 							objId := int(binary.BigEndian.Uint32(b))
-							objIdx := int(objectData[firstFieldSize+middleFieldSize])
+							bIdx := make([]byte, 4)
+							copy(bIdx[4-lastFieldSize:], objectData[firstFieldSize+middleFieldSize:firstFieldSize+middleFieldSize+lastFieldSize])
+							objIdx := int(binary.BigEndian.Uint32(bIdx))
 
 							// object id (i) is located in StmObj (objId) at index (objIdx)
 							this.xrefStream[i] = [2]int{objId, objIdx}
@@ -1247,8 +1255,17 @@ func (this *PdfReader) readKids(kids *PdfValue, r int) error {
 func (this *PdfReader) readPages() error {
 	var err error
 
+	if this.catalog == nil || this.catalog.Value == nil {
+		return errors.New("catalog is not set")
+	}
+
+	pagesSpec := this.catalog.Value.Dictionary["/Pages"]
+	if pagesSpec == nil {
+		return errors.New("catalog missing /Pages entry")
+	}
+
 	// resolve_pages_dict
-	pagesDict, err := this.resolveObject(this.catalog.Value.Dictionary["/Pages"])
+	pagesDict, err := this.resolveObject(pagesSpec)
 	if err != nil {
 		return errors.Wrap(err, "Failed to resolve pages object")
 	}
